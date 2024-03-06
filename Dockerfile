@@ -44,18 +44,19 @@ RUN echo "source /opt/ros/foxy/setup.bash" >> /etc/bash.bashrc
 
 WORKDIR /root/agx_ws
 
-# 代码下载
+# 更新rosdep和apt缓存
+RUN apt-get update && rosdep update --rosdistro foxy
+
+# 下载limo厂家代码
 RUN mkdir src &&\
     cd src &&\
     git clone https://github.com/HaojieZhang6848/limo_ros2.git -b foxy &&\
-    cd .. &&\
-    apt-get update && rosdep update --rosdistro foxy && \
-    rosdep install --from-paths src --ignore-src -r -y
+    cd ..
 
 # 安装navigation2
 RUN apt-get install -y ros-foxy-navigation2 ros-foxy-nav2-bringup
 
-# 安装astra-camera https://github.com/orbbec/ros2_astra_camera/tree/master
+# 下载astra-camera https://github.com/orbbec/ros2_astra_camera/tree/master
 RUN sudo apt install -y nlohmann-json3-dev libgflags-dev ros-$ROS_DISTRO-image-geometry ros-$ROS_DISTRO-camera-info-manager ros-$ROS_DISTRO-image-transport ros-$ROS_DISTRO-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev &&\
     cd /root && \
     git clone https://github.com/libuvc/libuvc.git && \
@@ -67,30 +68,23 @@ RUN sudo apt install -y nlohmann-json3-dev libgflags-dev ros-$ROS_DISTRO-image-g
     cd /root/agx_ws/src && \
     git clone https://github.com/orbbec/ros2_astra_camera.git
 
+# 下载async-web-server-cpp 和 web-video-server的源码
+RUN cd /root/agx_ws/src && \
+    git clone https://github.com/fkie/async_web_server_cpp.git -b ros2-releases && \
+    git clone https://github.com/RobotWebTools/web_video_server.git -b ros2
+
+# rosdep安装依赖
+RUN . /opt/ros/foxy/setup.sh &&\
+    rosdep install --from-paths src --ignore-src -r -y
+
 # 编译一切
 RUN . /opt/ros/foxy/setup.sh &&\
     cd /root/agx_ws &&\
     colcon build --symlink-install
 
-# 输出环境变量
+# 编辑.bashrc，打开bash的时候输出环境变量
 RUN echo "source /root/agx_ws/install/setup.bash" >> /root/.bashrc &&\
-    echo "echo \e[31mROS_DOMAIN_ID=$ROS_DOMAIN_ID\e[0m" >> /root/.bashrc
+    echo "echo ROS_DOMAIN_ID=$ROS_DOMAIN_ID" >> /root/.bashrc
 
 # 默认的cmd是永远sleep
 CMD ["sleep", "infinity"]
-
-# RUN apt-get intall ros-foxy-navigation2 ros-foxy-nav2-bringup -y && \
-#     r
-# ** [可选] 取消注释安装其他组件 **
-#
-# ENV DEBIAN_FRONTEND=noninteractive
-# RUN apt-get update \
-#    && apt-get -y install --no-install-recommends <your-package-list-here> \
-#    #
-#    # Clean up
-#    && apt-get autoremove -y \
-#    && apt-get clean -y \
-#    && rm -rf /var/lib/apt/lists/*
-# ENV DEBIAN_FRONTEND=dialog
-
-# 配置自动 source
