@@ -84,7 +84,7 @@ RUN . /opt/ros/foxy/setup.sh &&\
 
 # 编辑.bashrc，打开bash的时候输出环境变量
 RUN echo "source /root/agx_ws/install/setup.bash" >> /root/.bashrc &&\
-    echo "echo ROS_DOMAIN_ID=$ROS_DOMAIN_ID" >> /root/.bashrc
+    echo 'echo ROS_DOMAIN_ID=$ROS_DOMAIN_ID' >> /root/.bashrc
 
 # 默认的cmd是永远sleep
 CMD ["sleep", "infinity"]
